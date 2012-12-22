@@ -1,0 +1,772 @@
+" Author:  Eric Van Dewoestine
+"
+" License: {{{
+"   Copyright (c) 2005 - 2010, Eric Van Dewoestine
+"   All rights reserved.
+"
+"   Redistribution and use of this software in source and binary forms, with
+"   or without modification, are permitted provided that the following
+"   conditions are met:
+"
+"   * Redistributions of source code must retain the above
+"     copyright notice, this list of conditions and the
+"     following disclaimer.
+"
+"   * Redistributions in binary form must reproduce the above
+"     copyright notice, this list of conditions and the
+"     following disclaimer in the documentation and/or other
+"     materials provided with the distribution.
+"
+"   * Neither the name of Eric Van Dewoestine nor the names of its
+"     contributors may be used to endorse or promote products derived from
+"     this software without specific prior written permission of
+"     Eric Van Dewoestine.
+"
+"   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+"   IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+"   THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+"   PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+"   CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+"   EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+"   PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+"   PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+"   LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+"   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+"   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+" }}}
+
+runtime autoload/vcs/util.vim
+
+" Global Variables {{{
+  if !exists('g:VcsLogMaxEntries')
+    let g:VcsLogMaxEntries = 0
+  endif
+
+  if !exists('g:VcsDiffOrientation')
+    let g:VcsDiffOrientation = 'vertical'
+  endif
+
+  if !exists('g:VcsTrackerIdPatterns')
+    let g:VcsTrackerIdPatterns = ['#\(\d\+\)']
+  endif
+" }}}
+
+" Script Variables {{{
+  let vcs#command#VcsTrackerIdPatterns = g:VcsTrackerIdPatterns
+  let s:trackerIdPattern = join(vcs#command#VcsTrackerIdPatterns, '\|')
+" }}}
+
+" Annotate([revision]) {{{
+function! vcs#command#Annotate(...)
+  if exists('b:vcs_annotations')
+    call s:AnnotateOff()
+    return
+  endif
+
+  let path = exists('b:vcs_props') ? b:vcs_props.path :
+    \ vcs#util#GetRelativePath(expand('%:p'))
+  let revision = len(a:000) > 0 ? a:000[0] : ''
+
+  " let the vcs annotate the current working version so that the results line
+  " up with the contents (assuming the underlying vcs supports it).
+  "if revision == ''
+  "  let revision = vcs#util#GetRevision()
+  "endif
+
+  let cwd = vcs#util#LcdRoot()
+  try
+    let Annotate = vcs#util#GetVcsFunction('GetAnnotations')
+    if type(Annotate) != 2
+      call vcs#util#EchoError(
+        \ 'Current file is not under hg or git version control.')
+      return
+    endif
+    let annotations = Annotate(path, revision)
+  finally
+    exec 'lcd ' . cwd
+  endtry
+
+  call s:ApplyAnnotations(annotations)
+endfunction " }}}
+
+" Diff(revision) {{{
+" Diffs the current file against the current or supplied revision.
+function! vcs#command#Diff(revision)
+  let path = expand('%:p')
+  let relpath = vcs#util#GetRelativePath(expand('%:p'))
+  let revision = a:revision
+  if revision == ''
+    let revision = vcs#util#GetRevision(relpath)
+    if revision == ''
+      call vcs#util#Echo('Unable to determine file revision.')
+      return
+    endif
+  elseif revision == 'prev'
+    let revision = vcs#util#GetPreviousRevision(relpath)
+  endif
+
+  let filename = expand('%:p')
+  let buf1 = bufnr('%')
+
+  let orien = g:VcsDiffOrientation == 'horizontal' ? '' : 'vertical'
+  call vcs#command#ViewFileRevision(path, revision, 'bel ' . orien . ' split')
+  diffthis
+
+  let b:filename = filename
+  let b:vcs_diff_temp = 1
+  augroup vcs_diff
+    autocmd! BufWinLeave <buffer>
+    call vcs#util#GoToBufferWindowRegister(b:filename)
+    autocmd BufWinLeave <buffer> diffoff
+  augroup END
+
+  call vcs#util#GoToBufferWindow(buf1)
+  diffthis
+endfunction " }}}
+
+" Info() {{{
+" Retrieves and echos info on the current file.
+function! vcs#command#Info()
+  let path = vcs#util#GetRelativePath(expand('%:p'))
+  let cwd = vcs#util#LcdRoot()
+  try
+    let Info = vcs#util#GetVcsFunction('Info')
+    if type(Info) == 2
+      call Info(path)
+    endif
+  finally
+    exec 'lcd ' . cwd
+  endtry
+endfunction " }}}
+
+" Log(args) {{{
+" Opens a buffer with the results of running a log for the supplied arguments.
+function! vcs#command#Log(args)
+  let cwd = vcs#util#LcdRoot()
+  let args = a:args
+  let path = a:args == '' ? vcs#util#GetRelativePath(expand('%')) : ''
+  try
+    let Log = vcs#util#GetVcsFunction('Log')
+    if type(Log) != 2
+      return
+    endif
+
+    " handle user supplied % arg
+    let arglist = vcs#util#ParseArgs(args)
+    let percent_index = index(arglist, '%')
+    if percent_index != -1
+      call remove(arglist, percent_index)
+      let path = vcs#util#GetRelativePath(expand('%'))
+      let args = '"' . join(arglist, '" "') . '" '
+    endif
+
+    if path != ''
+      let args .= '"' . path . '"'
+    endif
+    let info = Log(args)
+  finally
+    exec 'lcd ' . cwd
+  endtry
+
+  " if annotations are on, jump to the revision for the current line
+  let jumpto = ''
+  if exists('b:vcs_annotations') && len(b:vcs_annotations) >= line('.')
+    let jumpto = split(b:vcs_annotations[line('.') - 1])[0]
+  endif
+
+  let content = []
+  if path != ''
+    let info.props.path = path
+    call add(content, path)
+    call add(content, '')
+  endif
+  for entry in info.log
+    call add(content, s:LogLine(entry))
+  endfor
+
+  if g:VcsLogMaxEntries > 0 && len(info.log) == g:VcsLogMaxEntries
+    call add(content, '------------------------------------------')
+    call add(content, 'Note: entries limited to ' . g:VcsLogMaxEntries . '.')
+    call add(content, '      let g:VcsLogMaxEntries = ' . g:VcsLogMaxEntries)
+  endif
+
+  call s:TempWindow(info.props, content)
+  call s:LogSyntax()
+  call s:LogMappings()
+
+  " continuation of annotation support
+  if jumpto != ''
+    " in the case of git, the annotate hash is longer than the log hash, so
+    " perform a little extra work to line them up.
+    let line = search('^[+-] \w\+', 'n')
+    if line != -1
+      let hash = substitute(getline(line), '^[+-] \(\w\+\) .*', '\1', '')
+      let jumpto = jumpto[:len(hash)-1]
+    endif
+
+    call search('^[+-] ' . jumpto)
+    normal! z
+  endif
+endfunction " }}}
+
+" LogGrep(args, type) {{{
+function! vcs#command#LogGrep(args, type)
+  if a:args == ''
+    call vcs#util#EchoError('Pattern required.')
+    return
+  endif
+
+  let cwd = vcs#util#LcdRoot()
+  try
+    let LogGrep = vcs#util#GetVcsFunction('LogGrep')
+    if type(LogGrep) != 2
+      return
+    endif
+
+    let arglist = vcs#util#ParseArgs(a:args)
+    let pattern = arglist[0]
+    " translate a few vim regex atoms to pcre
+    let pattern = substitute(pattern, '\\[<>]', '\\b', 'g')
+    let pattern = substitute(pattern, '\\{-}', '*?', 'g')
+    " vim sometimes adds a leading 'very nomagic' when using normal *
+    let pattern = substitute(pattern, '^\\V', '', '')
+    let arglist = arglist[1:]
+
+    " handle user supplied % arg
+    let percent_index = index(arglist, '%')
+    if percent_index != -1
+      let arglist[percent_index] = vcs#util#GetRelativePath(expand('%'))
+    endif
+    let args = len(arglist) ? '"' . join(arglist, '" "') . '"' : ''
+    let info = LogGrep(pattern, args, a:type)
+  finally
+    exec 'lcd ' . cwd
+  endtry
+
+  let content = [
+    \ 'pattern: ' . pattern .
+    \ (len(arglist) ? ' args: ' . join(arglist, ', ') : '')
+    \ , '']
+  for entry in info.log
+    call add(content, s:LogLine(entry))
+  endfor
+
+  call s:TempWindow(info.props, content)
+  call s:LogSyntax()
+  call s:LogMappings()
+endfunction " }}}
+
+" ViewFileRevision(path, revision, open_cmd) {{{
+" Open a read only view for the revision of the supplied version file.
+function! vcs#command#ViewFileRevision(path, revision, open_cmd)
+  let path = vcs#util#GetRelativePath(a:path)
+  let revision = a:revision
+  if revision == ''
+    let revision = vcs#util#GetRevision(path)
+    if revision == ''
+      call vcs#util#Echo('Unable to determine file revision.')
+      return
+    endif
+  elseif revision == 'prev'
+    let revision = vcs#util#GetPreviousRevision(path)
+  endif
+
+  let props = exists('b:vcs_props') ? b:vcs_props : s:GetProps()
+
+  if exists('b:filename')
+    let result = vcs#util#GoToBufferWindow(b:filename)
+    if !result && exists('b:winnr')
+      exec b:winnr . 'winc w'
+    endif
+  endif
+  let vcs_file = 'vcs_' . revision . '_' . fnamemodify(path, ':t')
+
+  let cwd = vcs#util#LcdRoot()
+  let orig_buf = bufnr('%')
+  try
+    " load in content
+    let ViewFileRevision = vcs#util#GetVcsFunction('ViewFileRevision')
+    if type(ViewFileRevision) != 2
+      return
+    endif
+    let lines = ViewFileRevision(path, revision)
+  finally
+    " switch back to the original cwd for both the original + new buffer.
+    let cur_buf = bufnr('%')
+    call vcs#util#GoToBufferWindow(orig_buf)
+    exec 'lcd ' . cwd
+    call vcs#util#GoToBufferWindow(cur_buf)
+    exec 'lcd ' . cwd
+  endtry
+
+  let open_cmd = a:open_cmd != '' ? a:open_cmd : 'split'
+  if has('win32') || has('win64')
+    let vcs_file = substitute(vcs_file, ':', '_', 'g')
+  endif
+  call vcs#util#GoToBufferWindowOrOpen(vcs_file, open_cmd)
+
+  setlocal noreadonly
+  setlocal modifiable
+  silent 1,$delete _
+  call append(1, lines)
+  silent 1,1delete
+  call cursor(1, 1)
+  setlocal nomodified
+  setlocal readonly
+  setlocal nomodifiable
+  setlocal noswapfile
+  setlocal nobuflisted
+  setlocal buftype=nofile
+  setlocal bufhidden=delete
+  doautocmd BufReadPost
+
+  let b:vcs_props = copy(props)
+endfunction " }}}
+
+" s:ApplyAnnotations(annotations) {{{
+function! s:ApplyAnnotations(annotations)
+  let existing = {}
+  let existing_annotations = {}
+  for exists in vcs#util#GetExistingSigns()
+    if exists.name !~ '^\(vcs_annotate_\|placeholder\)'
+      let existing[exists.line] = exists
+    else
+      let existing_annotations[exists.line] = exists
+    endif
+  endfor
+
+  let defined = vcs#util#GetDefinedSigns()
+  let index = 1
+  for annotation in a:annotations
+    if annotation == 'uncommitted'
+      if has_key(existing_annotations, index)
+        call vcs#util#UnplaceSign(existing_annotations[index].id)
+      endif
+      let index += 1
+      continue
+    endif
+
+    if has_key(existing, index)
+      let index += 1
+      continue
+    endif
+
+    let user = substitute(annotation, '^.\{-})\s\+\(.\{-}\)\s*$', '\1', '')
+    let user_abbrv = user[:1]
+    let name_parts = split(user)
+    " if the user name appears to be in the form of First Last, then try using
+    " using the first letter of each as initials
+    if len(name_parts) > 1 && name_parts[0] =~ '^\w' && name_parts[1] =~ '^\w'
+      let user_abbrv = name_parts[0][0] . name_parts[1][0]
+    endif
+    let sign_name = 'vcs_annotate_' . substitute(user[:5], ' ', '_', 'g')
+    if index(defined, sign_name) == -1
+      call vcs#util#DefineSign(sign_name, user_abbrv)
+      call add(defined, sign_name)
+    endif
+    call vcs#util#PlaceSign(sign_name, index)
+    let index += 1
+  endfor
+
+  let b:vcs_annotations = a:annotations
+  let b:vcs_props = s:GetProps()
+
+  call s:AnnotateInfo()
+
+  command! -buffer VcsAnnotateCat call s:AnnotateCat()
+  command! -buffer VcsAnnotateDiff call s:AnnotateDiff()
+  augroup vcs_annotate
+    autocmd!
+    autocmd CursorMoved <buffer> call <SID>AnnotateInfo()
+    autocmd BufWritePost <buffer>
+      \ if exists('b:vcs_annotations') |
+      \   unlet b:vcs_annotations |
+      \ endif |
+      \ call vcs#command#Annotate() |
+  augroup END
+endfunction " }}}
+
+" s:AnnotateInfo() {{{
+function! s:AnnotateInfo()
+  if mode() != 'n'
+    return
+  endif
+
+  if exists('b:vcs_annotations') && len(b:vcs_annotations) >= line('.')
+    call vcs#util#WideMessage('echo', b:vcs_annotations[line('.') - 1])
+  endif
+endfunction " }}}
+
+" s:AnnotateOff() {{{
+function! s:AnnotateOff()
+  if exists('b:vcs_annotations')
+    let defined = vcs#util#GetDefinedSigns()
+    for annotation in b:vcs_annotations
+      let user = substitute(annotation, '^.\{-})\s\+\(.\{-}\)\s*$', '\1', '')
+      let sign_name = 'vcs_annotate_' . substitute(user[:5], ' ', '_', 'g')
+      if index(defined, sign_name) != -1
+        let signs = vcs#util#GetExistingSigns(sign_name)
+        for sign in signs
+          call vcs#util#UnplaceSign(sign.id)
+        endfor
+        call vcs#util#UndefineSign(sign_name)
+        call remove(defined, index(defined, sign_name))
+      endif
+    endfor
+    unlet b:vcs_annotations
+    unlet b:vcs_props
+  endif
+
+  delcommand VcsAnnotateCat
+  delcommand VcsAnnotateDiff
+  augroup vcs_annotate
+    autocmd!
+  augroup END
+endfunction " }}}
+
+" s:AnnotateCat() {{{
+function! s:AnnotateCat()
+  if exists('b:vcs_annotations') && len(b:vcs_annotations) >= line('.')
+    let revision = split(b:vcs_annotations[line('.') - 1])[0]
+    call vcs#command#ViewFileRevision(b:vcs_props.path, revision, '')
+  endif
+endfunction " }}}
+
+" s:AnnotateDiff() {{{
+function! s:AnnotateDiff()
+  if exists('b:vcs_annotations') && len(b:vcs_annotations) >= line('.')
+    let revision = split(b:vcs_annotations[line('.') - 1])[0]
+    call vcs#command#Diff(revision)
+  endif
+endfunction " }}}
+
+" s:Action() {{{
+function! s:Action()
+  try
+    let line = getline('.')
+
+    if line =~ '^\s\+[+-] files$'
+      call s:ToggleFiles()
+      return
+    endif
+
+    if line =~ '^[+-] \w\+'
+      call s:ToggleDetail()
+      return
+    endif
+
+    let link = substitute(
+      \ getline('.'), '.*|\(.\{-}\%' . col('.') . 'c.\{-}\)|.*', '\1', '')
+    if link == line
+      return
+    endif
+
+    " link to view / annotate a file
+    if link == 'view' || link == 'annotate'
+      let file = s:GetFilePath()
+      let revision = s:GetRevision()
+
+      call vcs#command#ViewFileRevision(file, revision, '')
+      if link == 'annotate'
+        call vcs#command#Annotate(revision)
+      endif
+
+    " link to diff one version against previous
+    elseif link =~ '^diff '
+      let file = s:GetFilePath()
+      let revision = s:GetRevision()
+      let orien = g:VcsDiffOrientation == 'horizontal' ? '' : 'vertical'
+
+      if link =~ 'previous'
+        let previous = s:GetPreviousRevision()
+        if previous != ''
+          call vcs#command#ViewFileRevision(file, revision, '')
+          let buf1 = bufnr('%')
+          call vcs#command#ViewFileRevision(file, previous, 'bel ' . orien . ' split')
+          diffthis
+          call vcs#util#GoToBufferWindow(buf1)
+          diffthis
+        endif
+      else
+        let filename = b:filename
+        call vcs#command#ViewFileRevision(file, revision, 'bel ' . orien . ' split')
+        diffthis
+
+        let b:filename = filename
+        augroup vcs_diff
+          autocmd! BufWinLeave <buffer>
+          call vcs#util#GoToBufferWindowRegister(b:filename)
+          autocmd BufWinLeave <buffer> diffoff
+        augroup END
+
+        call vcs#util#GoToBufferWindow(filename)
+        diffthis
+      endif
+
+    " link to bug / feature report
+    elseif link =~ '^' . s:trackerIdPattern . '$'
+      let settings = vcs#util#GetSettings()
+      let url = get(settings, 'tracker_url', '')
+
+      if type(url) == 0
+        return
+      endif
+
+      if url == ''
+        call vcs#util#EchoWarning(
+          \ "Links to ticketing systems requires the 'tracker_url' setting\n" .
+          \ "for your repository to be set in g:VcsRepositorySettings.")
+        return
+      endif
+
+      for pattern in g:VcsTrackerIdPatterns
+        if link =~ pattern
+          let id = substitute(link, pattern, '\1', '')
+          break
+        endif
+      endfor
+      let url = substitute(url, '<id>', id, 'g')
+      call vcs#web#OpenUrl(url)
+
+    " added file
+    elseif link == 'A'
+      let file = substitute(line, '.*|A|\s*', '', '')
+      let revision = s:GetRevision()
+      call vcs#command#ViewFileRevision(file, revision, '')
+
+    " modified or renamed file
+    elseif link == 'M' || link == 'R'
+      let revision = s:GetRevision()
+      if link == 'M'
+        let file = substitute(line, '.*|M|\s*', '', '')
+        let old = file
+        let previous = vcs#util#GetPreviousRevision(file, revision)
+      else
+        let file = substitute(line, '.*|R|.*->\s*', '', '')
+        let old = substitute(line, '.*|R|\s*\(.*\)\s->.*', '\1', '')
+        let previous = vcs#util#GetPreviousRevision(old)
+      endif
+      call vcs#command#ViewFileRevision(file, revision, '')
+      let buf1 = bufnr('%')
+      let orien = g:VcsDiffOrientation == 'horizontal' ? '' : 'vertical'
+      call vcs#command#ViewFileRevision(old, previous, 'bel ' . orien . ' split')
+      diffthis
+      call vcs#util#GoToBufferWindow(buf1)
+      diffthis
+
+    " deleted file
+    elseif link == 'D'
+      let file = substitute(line, '.*|D|\s*', '', '')
+      let revision = s:GetRevision()
+      let previous = vcs#util#GetPreviousRevision(file, revision)
+      call vcs#command#ViewFileRevision(file, previous, '')
+
+    endif
+  catch /vcs error/
+    " the error message is printed by vcs#util#Vcs
+  endtry
+endfunction " }}}
+
+" s:LogLine(entry) {{{
+function! s:LogLine(entry)
+  let entry = a:entry
+  let refs = ''
+  if len(entry.refs)
+    let refs = '(' . join(entry.refs, ', ') . ') '
+  endif
+  return printf('+ %s %s%s (%s) %s',
+    \ entry.revision, refs, entry.author, entry.age, entry.comment)
+endfunction " }}}
+
+" s:ToggleDetail() {{{
+function! s:ToggleDetail()
+  let line = getline('.')
+  let lnum = line('.')
+  let revision = s:GetRevision()
+  let log = s:LogDetail(revision)
+
+  setlocal modifiable noreadonly
+  if line =~ '^+'
+    let open = substitute(line, '+ \(.\{-})\).*', '- \1 ' . log.date, '')
+    call setline(lnum, open)
+    let lines = []
+    if has_key(b:vcs_props, 'path')
+      if lnum == line('$')
+        call add(lines, "\t|view| |annotate| |diff working copy|")
+      else
+        call add(lines, "\t|view| |annotate| |diff working copy| |diff previous|")
+      endif
+    endif
+    let desc = substitute(log.description, '\_s*$', '', '')
+    let desc = substitute(desc, '\('. s:trackerIdPattern . '\)', '|\1|', 'g')
+    let lines += map(split(desc, "\n"), '(v:val != "" ? "\t" : "") . v:val')
+    call add(lines, '')
+    call add(lines, "\t+ files")
+    call append(lnum, lines)
+    retab
+  else
+    let pos = getpos('.')
+    call setline(lnum, s:LogLine(log))
+    let end = search('^[+-] \w\+', 'nW') - 1
+    if end == -1
+      let end = line('$')
+    endif
+    silent exec lnum + 1 . ',' . end . 'delete _'
+    call setpos('.', pos)
+  endif
+  setlocal nomodifiable readonly
+endfunction " }}}
+
+" s:ToggleFiles() {{{
+function! s:ToggleFiles()
+  let line = getline('.')
+  let lnum = line('.')
+  let revision = s:GetRevision()
+
+  setlocal modifiable noreadonly
+  if line =~ '^\s\++'
+    let open = substitute(line, '+', '-', '')
+    call setline(lnum, open)
+    let files = s:LogFiles(revision)
+    let lines = []
+    for file in files
+      if file.status == 'R'
+        call add(lines, "\t\t|" . file.status . "| " . file.old . ' -> ' . file.new)
+      else
+        call add(lines, "\t\t|" . file.status . "| " . file.file)
+      endif
+    endfor
+    call append(lnum, lines)
+    retab
+  else
+    let pos = getpos('.')
+    let close = substitute(line, '-', '+', '')
+    call setline(lnum, close)
+    let start = lnum + 1
+    let end = search('^[+-] \w\+', 'cnW') - 1
+    if end != lnum
+      if end == -1
+        let end = line('$')
+      endif
+      if end < start
+        let end = start
+      endif
+      silent exec start . ',' . end . 'delete _'
+      call setpos('.', pos)
+    endif
+  endif
+  setlocal nomodifiable readonly
+endfunction " }}}
+
+" s:GetProps() {{{
+function! s:GetProps()
+  return {
+      \ 'root_dir': vcs#util#GetRoot(),
+      \ 'path': vcs#util#GetRelativePath(expand('%:p')),
+    \ }
+endfunction " }}}
+
+" s:GetFilePath() {{{
+function! s:GetFilePath()
+  return getline(1)
+endfunction " }}}
+
+" s:GetRevision() {{{
+function! s:GetRevision()
+  let lnum = search('^[+-] \w\+', 'bcnW')
+  return substitute(getline(lnum), '[+-] \(\w\+\) .*', '\1', '')
+endfunction " }}}
+
+" s:GetPreviousRevision() {{{
+function! s:GetPreviousRevision()
+  let lnum = search('^[+-] \w\+', 'nW')
+  if lnum == 0
+    call vcs#util#EchoWarning('Could not find the previous revision number')
+    return ''
+  endif
+  return substitute(getline(lnum), '[+-] \(\w\+\) .*', '\1', '')
+endfunction " }}}
+
+" s:LogDetail(revision) {{{
+function! s:LogDetail(revision)
+  let LogDetail = vcs#util#GetVcsFunction('LogDetail')
+  if type(LogDetail) != 2
+    return
+  endif
+  return LogDetail(a:revision)
+endfunction " }}}
+
+" s:LogFiles(revision) {{{
+function! s:LogFiles(revision)
+  let LogFiles = vcs#util#GetVcsFunction('LogFiles')
+  if type(LogFiles) != 2
+    return
+  endif
+  return LogFiles(a:revision)
+endfunction " }}}
+
+" s:LogMappings() {{{
+function! s:LogMappings()
+  nnoremap <silent> <buffer> <cr> :call <SID>Action()<cr>
+endfunction " }}}
+
+" s:LogSyntax() {{{
+function! s:LogSyntax()
+  set ft=vcs_log
+  hi link VcsRevision Identifier
+  hi link VcsRefs Tag
+  hi link VcsDate String
+  hi link VcsLink Label
+  hi link VcsFiles Comment
+  syntax match VcsRevision /\(^[+-] \)\@<=\w\+/
+  syntax match VcsRefs /\(^[+-] \w\+ \)\@<=(.\{-})/
+  syntax match VcsDate /\(^[+-] \w\+ \((.\{-}) \)\?\w.\{-}\)\@<=(\d.\{-})/
+  syntax match VcsLink /|\S.\{-}|/
+  exec 'syntax match VcsFiles /\(^\s\+[+-] \)\@<=files$/'
+endfunction " }}}
+
+" s:TempWindow(props, lines) {{{
+function! s:TempWindow(props, lines)
+  let winnr = winnr()
+  let filename = expand('%:p')
+  if expand('%') == '[vcs_log]' && exists('b:filename')
+    let filename = b:filename
+    let winnr = b:winnr
+  endif
+
+  let name = vcs#util#EscapeBufferName('[vcs_log]')
+  if bufwinnr(name) == -1
+    silent! noautocmd exec "botright 10sview " . escape('[vcs_log]', ' ')
+    setlocal nowrap
+    setlocal winfixheight
+    setlocal noswapfile nobuflisted
+    setlocal buftype=nofile
+    setlocal bufhidden=delete
+    setlocal modifiable noreadonly
+    silent doautocmd WinEnter
+  else
+    exec bufwinnr(name) . "winc w"
+    setlocal modifiable noreadonly
+    silent 1,$delete _
+    silent doautocmd WinEnter
+  endif
+
+  call append(1, a:lines)
+  retab
+  silent 1,1delete _
+
+  setlocal nomodified nomodifiable readonly
+  silent doautocmd BufEnter
+
+  let b:filename = filename
+  let b:winnr = winnr
+  let b:vcs_props = a:props
+  exec 'lcd ' . escape(a:props.root_dir, ' ')
+
+  augroup vcs_temp_window
+    autocmd! BufWinLeave <buffer>
+    call vcs#util#GoToBufferWindowRegister(b:filename)
+  augroup END
+endfunction " }}}
+
+" vim:ft=vim:fdm=marker

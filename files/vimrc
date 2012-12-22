@@ -1,0 +1,227 @@
+" use a default shell impl
+set shell=sh
+
+set ai nu sm incsearch hlsearch
+set wildmode=list:longest
+set sw=4
+set sts=4
+set expandtab
+set laststatus=2
+set splitbelow splitright
+set fo=tcroq
+syntax enable
+filetype indent on
+filetype plugin on
+
+autocmd FileType make setlocal noexpandtab
+
+autocmd BufRead,BufNewFile *.vm setfiletype velocity
+
+colorscheme molokai
+
+let g:Tlist_Auto_Open = 1
+let g:Tlist_Use_Right_Window=1
+let g:Tlist_Use_Right_Window=1
+let g:TagList_title = "[Taglist]"
+let g:Tlist_Ctags_Cmd = "ctags"
+let g:Tlist_Sort_Type = "order"
+"let g:TaglistTooPosition = 'botright'
+let g:EclimProjectTreeAutoOpen = 1
+let g:EclimProjectTreeExpandPathOnOpen = 1
+let g:EclimProjectTreeSharedInstance = 1
+let g:SuperTabDefaultCompletionType = "<c-x><c-u>"
+let g:VerticalToolWindowSide = 'right'
+let g:EclimValidateSortResults = 'severity'
+let g:EclimProjectTreeActions = [
+    \ {'pattern': '.*', 'name': 'Tab', 'action': 'tabnew'},
+    \ {'pattern': '.*', 'name': 'VSplit', 'action': 'vsplit'},
+    \ {'pattern': '.*', 'name': 'Split', 'action': 'split'},
+    \ {'pattern': '.*', 'name': 'Edit', 'action': 'edit'},
+  \ ]
+let g:EclimJavaSearchSingleResult = 'edit'
+let g:EclimJavaHierarchyDefaultAction = 'edit'
+
+"autocmd BufRead,BufNewFile *.c,*.h,*.cpp set sw=2 sts=2
+
+"autocmd BufRead,BufNewFile *.java set path+=$PROJECT_HOME/devel/src/share/**
+"autocmd BufRead,BufNewFile *.java set path+=$PROJECT_HOME/devel/src/generated/**
+"autocmd BufRead,BufNewFile *.java set path+=/usr/local/lib/jdk1.5.0_11/**
+"autocmd BufRead,BufNewFile *.java set include=^#\s*import
+"autocmd BufRead,BufNewFile *.java set includeexpr=substitute(v:fname,'\\.','/','g')
+"autocmd BufRead,BufNewFile *.java set suffixesadd=.java
+"map gf <C-W>f
+"map gc gdb<C-W>f
+
+"autocmd BufRead,BufNewFile *.java set makeprg=ant\ -find\ build.xml\ \\\|\ \/home\/bsing\/sun-filter.sh
+autocmd BufRead,BufNewFile *.java set makeprg=ant\ -find\ build.xml
+autocmd BufRead,BufNewFile *.java set efm=%A\ %#[javac]\ %f:%l:\ %m,%-Z\ %#[javac]\ %p^,%-C%.%#
+"let java_allow_cpp_keywords=1
+
+"autocmd BufRead,BufNewFile *.java set tags=$PROJECT_HOME/devel/src/.tags,/home/bsing/javatags
+"autocmd BufRead,BufNewFile *.java set complete=i,],.,b,w,t,k,.
+
+"let Tlist_Show_One_File=1
+"let Tlist_Use_Right_Window=1
+"let g:winManagerWindowLayout = "TagList|FileExplorer"
+"let g:winManagerWidth = 35
+"let g:defaultExplorer = 0
+
+"nnoremap <silent> <F8> :WMToggle<CR>
+
+ab logi LogFactory.getLog(getClass()).info(
+ab logd LogFactory.getLog(getClass()).debug(
+ab loge LogFactory.getLog(getClass()).error(
+ab logw LogFactory.getLog(getClass()).warn(
+"ab logp import org.apache.commons.logging.LogFactory;
+ab sop System.out.println(
+ab sep System.err.println(
+
+function MakeFQClassName(name)
+    let fname = ""
+    let classtags = taglist(a:name)
+    for t in classtags
+        if t.kind == 'c'
+            let fname = t.filename
+            break
+        endif
+    endfor
+    unlet classtags
+    if fname != ""
+        let stripped = substitute(substitute(matchstr(fname, "com.*"), ".java", "", ""), "/", "\.", "g")
+        unlet fname
+        return stripped
+    else
+        return ""
+    endif
+endfunction
+
+function InsertImport(word)
+    let fqc = MakeFQClassName(a:word)
+    if fqc != ""
+        let imp = "import " . fqc . ";"
+        normal 0G
+        let currline = search("import com", "bW")
+        if currline != 0
+            call append(currline, imp)
+            echo "Import added to end of list"
+        else
+            let currline = search("package", "W")
+            normal o<ESC>
+            call append(currline, imp)
+            echo "First import added"
+        endif
+    endif
+    return
+endfunction
+
+function PerforceCmd(action, path, ask)
+    if a:ask == 1
+        let choice = confirm("Do you want to " . a:action . " this file?", "&Yes\n&No", 1)
+        if choice != 1
+            return
+        endif
+    endif
+    let result = system("p4 " . a:action . " " . a:path)
+    if result =~ "please login" || result =~ "invalid or unset"
+        let pass = inputsecret("Password: ")
+        let aresult = system("p4 login", pass)
+        let result = system("p4 " . a:action . " " . a:path)
+    endif
+
+    if result !~ "file(s) not"
+        if a:action == "edit"
+            set noro
+        elseif a:action == "revert"
+            edit!
+        endif
+        echo "Successfully ran p4 " . a:action . " " . a:path
+    else
+        echo "Could not perform p4 " . a:action . " " . a:path
+    endif
+    return
+endfunction
+
+function DeployFile(filearg, hostarg)
+    if a:filearg == ""
+        let file = input("File: ")
+    else
+        let file = a:filearg
+    endif
+    if a:hostarg == ""
+        let host = input("Host: ", "bsing-")
+    else
+        let host = a:hostarg
+    endif
+    let result = system("deploy-file " . host . " " . file)
+endfunction
+
+function SplitWindowToGrep(word, multi, split)
+    let prefix = $PROJECT_HOME . '/devel/src/share/'
+    if a:multi == 1
+        let file = prefix
+    else
+        let file = expand('%:p')
+    endif
+    let lines = split(system('grep -nrHEI "\b' . a:word . '\b" ' . file), "\n")
+    let linenums = []
+    let filenames = []
+    let lines2 = []
+    call filter(lines, 'v:val !~ "import"')
+    call filter(lines, 'v:val !~ "Binary file"')
+    let n = 1
+    for l in lines
+        let entries = split(l, ":")
+        let rest = entries[2:]
+        let reststr = join(rest, ":")
+        let stripped = substitute(reststr, '^\s\+', "", "")
+        if stripped =~ '^\*' 
+            continue
+        elseif stripped =~ '^//'
+            continue
+        elseif stripped =~ '^/\*'
+            continue
+        endif
+        call add(linenums, entries[1])
+        call add(filenames, entries[0])
+        call add(lines2, n . " - " . substitute(substitute(entries[0], prefix, "", ""), "/", " ", "g") . ":" . entries[1] . " - " . stripped)
+        let n = n + 1
+    endfor
+    let choice = inputlist(lines2) - 1
+    if choice >= 0
+        let fname = get(filenames, choice, "")
+        let lnum = get(linenums, choice, 0)
+        if fname != ""
+            if filereadable(fname) != 0
+                if a:split == 1
+                    execute("split " . fname)
+                endif
+                execute("normal " . lnum . "ggzz")
+            endif
+        endif
+    endif
+endfunction
+
+"map <silent> <F5> :call SplitWindowToGrep(expand("<cword>"), 0, 0)<CR>
+"map <silent> <F6> :call SplitWindowToGrep(expand("<cword>"), 1, 1)<CR>
+"map <silent> <F7> :call SplitWindowToGrep(expand("<cword>"), 0, 1)<CR>
+
+"map <silent> <F1> :call DeployFile("showstore.jar", "bsing-dss200")<CR>
+"map <silent> <F2> :call DeployFile("showstore.jar", "")<CR>
+"map <silent> <F3> :call DeployFile("", "")<CR>
+
+map <silent> <F2> :tabpre<CR>
+map <silent> <F3> :tabne<CR>
+map <silent> <F4> :ProjectProblems<CR>
+map <silent> <F5> :JavaImport<CR>
+map <silent> <F6> :JavaSearchContext<CR>
+map <silent> <F7> :JavaHierarchy<CR>
+
+nnoremap <silent> <F9> :call PerforceCmd("edit", expand("%:p"), 1)<CR>
+nnoremap <silent> <F10> :call PerforceCmd("add -t ktext", expand("%:p"), 0)<CR>
+nnoremap <silent> <F11> :call PerforceCmd("revert", expand("%:p"), 1)<CR>
+nnoremap <silent> <F12> :echo system("p4 opened")<CR>
+
+command Pfedit call PerforceCmd("edit", expand("%:p"), 1)
+command Pfadd call PerforceCmd("add -t ktext", expand("%:p"), 0)
+command Pfrevert call PerforceCmd("revert", expand("%:p"), 1)
+command Pfopened echo system("p4 opened")
