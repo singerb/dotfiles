@@ -18,4 +18,7 @@ mapping = {
     "files/awesome/eminent.lua": "~/.config/awesome/",
     "files/awesome/themes/": "~/.config/awesome/",
     "files/awesome/revelation/": "~/.config/awesome/",
+
+    # xterm configuration
+    "files/Xresources": "~/.Xresources",
 }
