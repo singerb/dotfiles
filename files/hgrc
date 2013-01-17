@@ -1,0 +1,22 @@
+[ui]
+username = Benedict Singer <singerb.dev@gmail.com>
+
+[extensions]
+mq =
+children = 
+
+[defaults]
+qnew = -UDe
+qrefresh = -UD
+qseries = -sv
+
+[diff]
+git = 1
+showfunc = 1
+unified = 8
+
+[alias]
+try = push -f ssh://hg.mozilla.org/try
+
+[hooks]
+post-try = hg phase --force --draft "mq()"

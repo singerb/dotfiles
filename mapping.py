@@ -1,4 +1,8 @@
 mapping = {
+    # source control config files
+    "files/gitconfig": "~/.gitconfig",
+    "files/hgrc": "~/.hgrc",
+
     # fish config and prompt
     "files/config.fish": "~/.config/fish/",
     "files/fish_prompt.fish": "~/.config/fish/functions/",
@@ -10,6 +14,7 @@ mapping = {
     "files/vim/eclim/": "~/.vim/",
     "files/vim/ftdetect/": "~/.vim/",
     "files/vim/ftplugin/": "~/.vim/",
+    "files/vim/indent/": "~/.vim/",
     "files/vim/plugin/": "~/.vim/",
     "files/vim/syntax/": "~/.vim/",
 

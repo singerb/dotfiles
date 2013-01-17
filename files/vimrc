@@ -1,6 +1,7 @@
 " use a default shell impl
 set shell=sh
 
+set nocompatible
 set ai nu sm incsearch hlsearch
 set wildmode=list:longest
 set sw=4
@@ -8,18 +9,20 @@ set sts=4
 set expandtab
 set laststatus=2
 set splitbelow splitright
+set guioptions-=T
 set fo=tcroq
 syntax enable
 filetype indent on
 filetype plugin on
 
 autocmd FileType make setlocal noexpandtab
+autocmd! FileType python setlocal nosmartindent
 
 autocmd BufRead,BufNewFile *.vm setfiletype velocity
 
 colorscheme molokai
 
-let g:Tlist_Auto_Open = 1
+let g:Tlist_Auto_Open = 0
 let g:Tlist_Use_Right_Window=1
 let g:Tlist_Use_Right_Window=1
 let g:TagList_title = "[Taglist]"
@@ -59,14 +62,6 @@ autocmd BufRead,BufNewFile *.java set efm=%A\ %#[javac]\ %f:%l:\ %m,%-Z\ %#[java
 
 "autocmd BufRead,BufNewFile *.java set tags=$PROJECT_HOME/devel/src/.tags,/home/bsing/javatags
 "autocmd BufRead,BufNewFile *.java set complete=i,],.,b,w,t,k,.
-
-"let Tlist_Show_One_File=1
-"let Tlist_Use_Right_Window=1
-"let g:winManagerWindowLayout = "TagList|FileExplorer"
-"let g:winManagerWidth = 35
-"let g:defaultExplorer = 0
-
-"nnoremap <silent> <F8> :WMToggle<CR>
 
 ab logi LogFactory.getLog(getClass()).info(
 ab logd LogFactory.getLog(getClass()).debug(
@@ -141,20 +136,6 @@ function PerforceCmd(action, path, ask)
     return
 endfunction
 
-function DeployFile(filearg, hostarg)
-    if a:filearg == ""
-        let file = input("File: ")
-    else
-        let file = a:filearg
-    endif
-    if a:hostarg == ""
-        let host = input("Host: ", "bsing-")
-    else
-        let host = a:hostarg
-    endif
-    let result = system("deploy-file " . host . " " . file)
-endfunction
-
 function SplitWindowToGrep(word, multi, split)
     let prefix = $PROJECT_HOME . '/devel/src/share/'
     if a:multi == 1
@@ -204,10 +185,6 @@ endfunction
 "map <silent> <F5> :call SplitWindowToGrep(expand("<cword>"), 0, 0)<CR>
 "map <silent> <F6> :call SplitWindowToGrep(expand("<cword>"), 1, 1)<CR>
 "map <silent> <F7> :call SplitWindowToGrep(expand("<cword>"), 0, 1)<CR>
-
-"map <silent> <F1> :call DeployFile("showstore.jar", "bsing-dss200")<CR>
-"map <silent> <F2> :call DeployFile("showstore.jar", "")<CR>
-"map <silent> <F3> :call DeployFile("", "")<CR>
 
 map <silent> <F2> :tabpre<CR>
 map <silent> <F3> :tabne<CR>

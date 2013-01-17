@@ -1,0 +1,5 @@
+[user]
+	name = Benedict Singer
+	email = singerb@mac.com
+[core]
+	editor = vim
