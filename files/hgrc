@@ -1,5 +1,6 @@
 [ui]
 username = Benedict Singer <singerb.dev@gmail.com>
+editor = vim
 
 [extensions]
 mq =
