@@ -18,7 +18,7 @@ set splitbelow splitright " splits go below and right by default
 set guioptions-=T " remove the toolbar from the gui version
 
 set encoding=utf-8 " so our list chars can be nice
-set fo=tcroq " text wrapping: auto wrap text and comments, auto insert comment leaders
+set fo=tcroq " text wrapping: auto wrap text and comments, auto insert comment leaders; TODO add a for markdown files for nice paragraph wrapping
 set wrap " soft wrap text
 set listchars=tab:▸-,trail:-,eol:¬ " show tabs, trailing spaces, and ends of lines; there's a leader shortcut later to toggle list mode since it can be distracting
 " set textwidth=80
@@ -243,10 +243,10 @@ command Pfrevert call PerforceCmd("revert", expand("%:p"), 1)
 command Pfopened echo system("p4 opened")
 
 " some leader shortcuts for the perforce tasks
-map <leader>Pe :Pfedit<CR>
-map <leader>Pa :Pfadd<CR>
-map <leader>Pr :Pfrevert<CR>
-map <leader>Po :Pfopened<CR>
+map <leader>4e :Pfedit<CR>
+map <leader>4a :Pfadd<CR>
+map <leader>4r :Pfrevert<CR>
+map <leader>4o :Pfopened<CR>
 
 " leader shortcut for list mode
 map <leader>l :set list!<CR>
