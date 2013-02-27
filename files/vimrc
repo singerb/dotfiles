@@ -1,34 +1,60 @@
-" use a default shell impl
-set shell=sh
+set shell=sh " use a default shell impl, since vim doesn't like fish for some reason
+set nocompatible " turn off silly vi compatibility
 
-set nocompatible
-set ai nu sm incsearch hlsearch
-set wildmode=list:longest
+set ai nu sm " standard programming tools: auto-indent, line numbers, show matching braces
+set incsearch hlsearch " better search: incremental as you type, and highlight matches
+set wildmode=list:longest " sane command/file completion: complete longest common string and list all possible matches; why is this not the default?
+
+" 4 space tabs, expanded to spaces
 set sw=4
 set sts=4
 set expandtab
-set laststatus=2
-set splitbelow splitright
-set guioptions-=T
-set fo=tcroq
+
+set laststatus=2 " always have a status line
+set splitbelow splitright " splits go below and right by default
+set guioptions-=T " remove the toolbar from the gui version
+
+set fo=tcroq " text wrapping: auto wrap text and comments, auto insert comment leaders
+set wrap " soft wrap text
+set listchars=tab:>-,trail:-,eol:$ " show tabs, trailing spaces, and ends of lines; there's a leader shortcut later to toggle list mode since it can be distracting by default
+" set textwidth=80
+" set colorcolumn=81
+
+set scrolloff=5 " always keep 5 lines of context when scrolling the cursor
+
+set hidden " keep changed buffers as hidden ones
+set cursorline " highlight the cursor line TODO do I like this?
+set ruler " show line/col of cursor
+
+" syntax highlighting
 syntax enable
 filetype indent on
 filetype plugin on
 
+" make requires tabs, not spaces, so force our nice tab expansion off although they'll still display as 4 spaces
 autocmd FileType make setlocal noexpandtab
+
+" smart indenting generally gets things right, but I find it annoying in python files due to the comment behavior
 autocmd! FileType python setlocal nosmartindent
 
+" set the velocity filetype on .vm files
 autocmd BufRead,BufNewFile *.vm setfiletype velocity
 
+" nice colorscheme
 colorscheme molokai
 
+" sane leader key for our commands and plugins
+let mapleader = ","
+
+" taglist setup: don't auto open, open on the right, use ctags, sort by order in the file
 let g:Tlist_Auto_Open = 0
 let g:Tlist_Use_Right_Window=1
 let g:Tlist_Use_Right_Window=1
 let g:TagList_title = "[Taglist]"
 let g:Tlist_Ctags_Cmd = "ctags"
 let g:Tlist_Sort_Type = "order"
-"let g:TaglistTooPosition = 'botright'
+
+" eclim settings
 let g:EclimProjectTreeAutoOpen = 1
 let g:EclimProjectTreeExpandPathOnOpen = 1
 let g:EclimProjectTreeSharedInstance = 1
@@ -44,8 +70,10 @@ let g:EclimProjectTreeActions = [
 let g:EclimJavaSearchSingleResult = 'edit'
 let g:EclimJavaHierarchyDefaultAction = 'edit'
 
+" TODO get this back somehow for mozilla C/CPP source
 "autocmd BufRead,BufNewFile *.c,*.h,*.cpp set sw=2 sts=2
 
+" old pre-eclim Java settings
 "autocmd BufRead,BufNewFile *.java set path+=$PROJECT_HOME/devel/src/share/**
 "autocmd BufRead,BufNewFile *.java set path+=$PROJECT_HOME/devel/src/generated/**
 "autocmd BufRead,BufNewFile *.java set path+=/usr/local/lib/jdk1.5.0_11/**
@@ -54,15 +82,16 @@ let g:EclimJavaHierarchyDefaultAction = 'edit'
 "autocmd BufRead,BufNewFile *.java set suffixesadd=.java
 "map gf <C-W>f
 "map gc gdb<C-W>f
-
 "autocmd BufRead,BufNewFile *.java set makeprg=ant\ -find\ build.xml\ \\\|\ \/home\/bsing\/sun-filter.sh
-autocmd BufRead,BufNewFile *.java set makeprg=ant\ -find\ build.xml
-autocmd BufRead,BufNewFile *.java set efm=%A\ %#[javac]\ %f:%l:\ %m,%-Z\ %#[javac]\ %p^,%-C%.%#
 "let java_allow_cpp_keywords=1
-
 "autocmd BufRead,BufNewFile *.java set tags=$PROJECT_HOME/devel/src/.tags,/home/bsing/javatags
 "autocmd BufRead,BufNewFile *.java set complete=i,],.,b,w,t,k,.
 
+" still useful Java settings to run ant from :make
+autocmd BufRead,BufNewFile *.java set makeprg=ant\ -find\ build.xml
+autocmd BufRead,BufNewFile *.java set efm=%A\ %#[javac]\ %f:%l:\ %m,%-Z\ %#[javac]\ %p^,%-C%.%#
+
+" abbreviations for Java logging
 ab logi LogFactory.getLog(getClass()).info(
 ab logd LogFactory.getLog(getClass()).debug(
 ab loge LogFactory.getLog(getClass()).error(
@@ -186,19 +215,29 @@ endfunction
 "map <silent> <F6> :call SplitWindowToGrep(expand("<cword>"), 1, 1)<CR>
 "map <silent> <F7> :call SplitWindowToGrep(expand("<cword>"), 0, 1)<CR>
 
-map <silent> <F2> :tabpre<CR>
-map <silent> <F3> :tabne<CR>
-map <silent> <F4> :ProjectProblems<CR>
-map <silent> <F5> :JavaImport<CR>
-map <silent> <F6> :JavaSearchContext<CR>
-map <silent> <F7> :JavaHierarchy<CR>
+"map <silent> <F2> :tabpre<CR>
+"map <silent> <F3> :tabne<CR>
+"map <silent> <F4> :ProjectProblems<CR>
+"map <silent> <F5> :JavaImport<CR>
+"map <silent> <F6> :JavaSearchContext<CR>
+"map <silent> <F7> :JavaHierarchy<CR>
 
-nnoremap <silent> <F9> :call PerforceCmd("edit", expand("%:p"), 1)<CR>
-nnoremap <silent> <F10> :call PerforceCmd("add -t ktext", expand("%:p"), 0)<CR>
-nnoremap <silent> <F11> :call PerforceCmd("revert", expand("%:p"), 1)<CR>
-nnoremap <silent> <F12> :echo system("p4 opened")<CR>
+"nnoremap <silent> <F9> :call PerforceCmd("edit", expand("%:p"), 1)<CR>
+"nnoremap <silent> <F10> :call PerforceCmd("add -t ktext", expand("%:p"), 0)<CR>
+"nnoremap <silent> <F11> :call PerforceCmd("revert", expand("%:p"), 1)<CR>
+"nnoremap <silent> <F12> :echo system("p4 opened")<CR>
 
+" basic perforce integration
 command Pfedit call PerforceCmd("edit", expand("%:p"), 1)
 command Pfadd call PerforceCmd("add -t ktext", expand("%:p"), 0)
 command Pfrevert call PerforceCmd("revert", expand("%:p"), 1)
 command Pfopened echo system("p4 opened")
+
+" some leader shortcuts for the perforce tasks
+map <leader>Pe :Pfedit<CR>
+map <leader>Pa :Pfadd<CR>
+map <leader>Pr :Pfrevert<CR>
+map <leader>Po :Pfopened<CR>
+
+" leader shortcut for list mode
+map <leader>l :set list!<CR>
