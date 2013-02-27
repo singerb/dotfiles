@@ -2,6 +2,7 @@ mapping = {
     # source control config files
     "files/gitconfig": "~/.gitconfig",
     "files/hgrc": "~/.hgrc",
+    "files/cvsignore": "~/.cvsignore",
 
     # fish config and prompt
     "files/config.fish": "~/.config/fish/",
@@ -10,6 +11,7 @@ mapping = {
     # .vimrc and plugins
     "files/vimrc": "~/.vimrc",
     "files/vim/autoload/": "~/.vim/",
+    "files/vim/bundle/": "~/.vim/",
     "files/vim/colors/": "~/.vim/",
     "files/vim/eclim/": "~/.vim/",
     "files/vim/ftdetect/": "~/.vim/",

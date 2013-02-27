@@ -3,3 +3,4 @@
 	email = singerb@mac.com
 [core]
 	editor = vim
+	excludesfile = ~/.cvsignore

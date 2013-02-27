@@ -1,3 +1,6 @@
+" start things off with pathogen, before we turn on filetype
+execute pathogen#infect()
+
 set shell=sh " use a default shell impl, since vim doesn't like fish for some reason
 set nocompatible " turn off silly vi compatibility
 
@@ -14,16 +17,17 @@ set laststatus=2 " always have a status line
 set splitbelow splitright " splits go below and right by default
 set guioptions-=T " remove the toolbar from the gui version
 
+set encoding=utf-8 " so our list chars can be nice
 set fo=tcroq " text wrapping: auto wrap text and comments, auto insert comment leaders
 set wrap " soft wrap text
-set listchars=tab:>-,trail:-,eol:$ " show tabs, trailing spaces, and ends of lines; there's a leader shortcut later to toggle list mode since it can be distracting by default
+set listchars=tab:▸-,trail:-,eol:¬ " show tabs, trailing spaces, and ends of lines; there's a leader shortcut later to toggle list mode since it can be distracting
 " set textwidth=80
 " set colorcolumn=81
 
 set scrolloff=5 " always keep 5 lines of context when scrolling the cursor
 
 set hidden " keep changed buffers as hidden ones
-set cursorline " highlight the cursor line TODO do I like this?
+set cursorline " highlight the cursor line
 set ruler " show line/col of cursor
 
 " syntax highlighting
@@ -41,10 +45,15 @@ autocmd! FileType python setlocal nosmartindent
 autocmd BufRead,BufNewFile *.vm setfiletype velocity
 
 " nice colorscheme
-colorscheme molokai
+" colorscheme molokai
+set background=dark
+colorscheme solarized
 
 " sane leader key for our commands and plugins
 let mapleader = ","
+
+" minibufexpl options: open above
+let g:miniBufExplSplitBelow=0
 
 " taglist setup: don't auto open, open on the right, use ctags, sort by order in the file
 let g:Tlist_Auto_Open = 0
