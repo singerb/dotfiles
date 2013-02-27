@@ -11,6 +11,9 @@
 " The API is documented inline below.  For maximum ease of reading,
 " :set foldmethod=marker
 
+" bzsing change for fish compat in glob()
+set shell=sh
+
 if exists("g:loaded_pathogen") || &cp
   finish
 endif
