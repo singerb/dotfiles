@@ -55,13 +55,18 @@ let mapleader = ","
 " minibufexpl options: open above
 let g:miniBufExplSplitBelow=0
 
+" tagbar setup: auto close, auto focus, sort by position
+let g:tagbar_autoclose = 1
+let g:tagbar_autofocus = 1
+let g:tagbar_sort = 0
+
 " taglist setup: don't auto open, open on the right, use ctags, sort by order in the file
-let g:Tlist_Auto_Open = 0
-let g:Tlist_Use_Right_Window=1
-let g:Tlist_Use_Right_Window=1
-let g:TagList_title = "[Taglist]"
-let g:Tlist_Ctags_Cmd = "ctags"
-let g:Tlist_Sort_Type = "order"
+"let g:Tlist_Auto_Open = 0
+"let g:Tlist_Use_Right_Window=1
+"let g:Tlist_Use_Right_Window=1
+"let g:TagList_title = "[Taglist]"
+"let g:Tlist_Ctags_Cmd = "ctags"
+"let g:Tlist_Sort_Type = "order"
 
 " eclim settings
 let g:EclimProjectTreeAutoOpen = 1
@@ -250,3 +255,12 @@ map <leader>4o :Pfopened<CR>
 
 " leader shortcut for list mode
 map <leader>l :set list!<CR>
+
+" leader shortcut for ack
+map <leader>a :Ack! 
+
+" leader shortcut to show tags
+map <leader>g :TagbarToggle<CR>
+
+" leader shortcut to show the undo tree
+map <leader>u :GundoToggle<CR>
