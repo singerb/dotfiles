@@ -55,12 +55,17 @@ let mapleader = ","
 " minibufexpl options: open above
 let g:miniBufExplSplitBelow=0
 
+" command-t options: reverse the results so the best match is always right
+" above the prompt
+let g:CommandTMatchWindowReverse = 1
+
 " tagbar setup: auto close, auto focus, sort by position
 let g:tagbar_autoclose = 1
 let g:tagbar_autofocus = 1
 let g:tagbar_sort = 0
 
 " taglist setup: don't auto open, open on the right, use ctags, sort by order in the file
+" replaced by tagbar; TODO remove from vim/dotfiles repo
 "let g:Tlist_Auto_Open = 0
 "let g:Tlist_Use_Right_Window=1
 "let g:Tlist_Use_Right_Window=1
