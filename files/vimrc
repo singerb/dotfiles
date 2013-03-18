@@ -258,6 +258,10 @@ map <leader>4a :Pfadd<CR>
 map <leader>4r :Pfrevert<CR>
 map <leader>4o :Pfopened<CR>
 
+" leader shortcuts for fast splits
+map <leader>v :vsplit<CR>
+map <leader>s :split<CR>
+
 " leader shortcut for list mode
 map <leader>l :set list!<CR>
 
