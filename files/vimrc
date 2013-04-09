@@ -35,6 +35,9 @@ syntax enable
 filetype indent on
 filetype plugin on
 
+" get our scons files highlighted nicely
+autocmd BufNewFile,BufRead SConstruct,SConscript set filetype=python
+
 " make requires tabs, not spaces, so force our nice tab expansion off although they'll still display as 4 spaces
 autocmd FileType make setlocal noexpandtab
 
@@ -43,6 +46,10 @@ autocmd! FileType python setlocal nosmartindent
 
 " set the velocity filetype on .vm files
 autocmd BufRead,BufNewFile *.vm setfiletype velocity
+
+" set up comment strings
+autocmd FileType python,sh,make setlocal commentstring=#\ %s
+autocmd FileType c,cpp setlocal commentstring=//\ %s
 
 " nice colorscheme
 " colorscheme molokai
