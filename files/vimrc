@@ -15,7 +15,17 @@ set expandtab
 
 set laststatus=2 " always have a status line
 set splitbelow splitright " splits go below and right by default
-set guioptions-=T " remove the toolbar from the gui version
+
+" remove the toolbar,menubar,scrollbars from the gui version
+" set a nice font for the GUI; terminal vim uses the terminal font, obviously
+set guioptions-=T
+set guioptions-=m
+set guioptions-=r
+set guioptions-=R
+set guioptions-=l
+set guioptions-=L
+set guioptions-=b
+set guifont=Source\ Code\ Pro\ Medium\ 11
 
 set encoding=utf-8 " so our list chars can be nice
 set fo=tcroq " text wrapping: auto wrap text and comments, auto insert comment leaders; TODO add a for markdown files for nice paragraph wrapping
@@ -35,6 +45,10 @@ syntax enable
 filetype indent on
 filetype plugin on
 
+" enable the built in man page reading; makes :Man <foo> and <leader>K (man of
+" word under cursor) available
+runtime ftplugin/man.vim
+
 " get our scons files highlighted nicely
 autocmd BufNewFile,BufRead SConstruct,SConscript set filetype=python
 
@@ -52,7 +66,6 @@ autocmd FileType python,sh,make setlocal commentstring=#\ %s
 autocmd FileType c,cpp setlocal commentstring=//\ %s
 
 " nice colorscheme
-" colorscheme molokai
 set background=dark
 colorscheme solarized
 
