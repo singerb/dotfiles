@@ -293,3 +293,17 @@ map <leader>g :TagbarToggle<CR>
 
 " leader shortcut to show the undo tree
 map <leader>u :GundoToggle<CR>
+
+" leader shortcut to run either hg or git diff via lawrencium or fugitive, if
+" available
+function VCDiff()
+    if exists(":Hgvdiff")
+        Hgvdiff
+    elseif exists(":Gvdiff")
+        Gvdiff
+    endif
+endfunction
+
+command VCDiff call VCDiff()
+
+map <leader>d :VCDiff<CR>
