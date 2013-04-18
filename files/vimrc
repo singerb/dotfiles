@@ -65,6 +65,9 @@ autocmd BufRead,BufNewFile *.vm setfiletype velocity
 autocmd FileType python,sh,make setlocal commentstring=#\ %s
 autocmd FileType c,cpp setlocal commentstring=//\ %s
 
+" sadly, mozilla and my workplace use 2 spaces for C/C++, so override for that
+autocmd BufRead,BufNewFile *.c,*.h,*.cpp,*.hpp,*.cxx set sw=2 sts=2
+
 " nice colorscheme
 set background=dark
 colorscheme solarized
@@ -108,9 +111,6 @@ let g:EclimProjectTreeActions = [
   \ ]
 let g:EclimJavaSearchSingleResult = 'edit'
 let g:EclimJavaHierarchyDefaultAction = 'edit'
-
-" TODO get this back somehow for mozilla C/CPP source
-"autocmd BufRead,BufNewFile *.c,*.h,*.cpp set sw=2 sts=2
 
 " old pre-eclim Java settings
 "autocmd BufRead,BufNewFile *.java set path+=$PROJECT_HOME/devel/src/share/**

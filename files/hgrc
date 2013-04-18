@@ -1,10 +1,15 @@
 [ui]
-username = Benedict Singer <singerb.dev@gmail.com>
+username = Benedict Singer <bsinger@novodynamics.com>
 editor = vim
+style = compact
 
 [extensions]
 mq =
 children = 
+graphlog = 
+color = 
+progress = 
+convert = 
 
 [defaults]
 qnew = -UDe
