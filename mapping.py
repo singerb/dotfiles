@@ -12,13 +12,6 @@ mapping = {
     "files/vimrc": "~/.vimrc",
     "files/vim/autoload/": "~/.vim/",
     "files/vim/bundle/": "~/.vim/",
-    "files/vim/colors/": "~/.vim/",
-    "files/vim/eclim/": "~/.vim/",
-    "files/vim/ftdetect/": "~/.vim/",
-    "files/vim/ftplugin/": "~/.vim/",
-    "files/vim/indent/": "~/.vim/",
-    "files/vim/plugin/": "~/.vim/",
-    "files/vim/syntax/": "~/.vim/",
 
     # awesome config, themes, and extensions
     "files/awesome/rc.lua": "~/.config/awesome/",
