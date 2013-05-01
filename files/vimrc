@@ -28,11 +28,13 @@ set guioptions-=b
 set guifont=Source\ Code\ Pro\ Medium\ 11
 
 set encoding=utf-8 " so our list chars can be nice
-set fo=tcroq " text wrapping: auto wrap text and comments, auto insert comment leaders; TODO add a for markdown files for nice paragraph wrapping
+set fo=croql " text wrapping: auto wrap comments, auto insert comment leaders; TODO add a for markdown files for nice paragraph wrapping
 set wrap " soft wrap text
 set listchars=tab:▸-,trail:-,eol:¬ " show tabs, trailing spaces, and ends of lines; there's a leader shortcut later to toggle list mode since it can be distracting
-" set textwidth=80
-" set colorcolumn=81
+set textwidth=80
+" same shortcut to toggle list mode toggles the column,
+" since it's also distracting
+" set colorcolumn="+1"
 
 set scrolloff=5 " always keep 5 lines of context when scrolling the cursor
 
@@ -74,6 +76,9 @@ colorscheme solarized
 
 " sane leader key for our commands and plugins
 let mapleader = ","
+
+" syntastic python options; use flake8 and pylint for MAXIMUM checking
+let g:syntastic_python_checkers=['flake8', 'pylint']
 
 " minibufexpl options: open above
 let g:miniBufExplSplitBelow=0
@@ -282,11 +287,21 @@ map <leader>4o :Pfopened<CR>
 map <leader>v :vsplit<CR>
 map <leader>s :split<CR>
 
-" leader shortcut for list mode
-map <leader>l :set list!<CR>
+" leader shortcut for list mode and column
+function s:ToggleColorColumn()
+    if &colorcolumn == ""
+        windo let &colorcolumn="+1"
+    else
+        windo let &colorcolumn=""
+    endif
+endfunction
+
+command ToggleColorColumn call <SID>ToggleColorColumn()
+
+map <leader>l :set list! \| ToggleColorColumn<CR>
 
 " leader shortcut for ack
-map <leader>a :Ack! 
+map <leader>a :Ack!
 
 " leader shortcut to show tags
 map <leader>g :TagbarToggle<CR>
@@ -296,7 +311,7 @@ map <leader>u :GundoToggle<CR>
 
 " leader shortcut to run either hg or git diff via lawrencium or fugitive, if
 " available
-function VCDiff()
+function s:VCDiff()
     if exists(":Hgvdiff")
         Hgvdiff
     elseif exists(":Gvdiff")
@@ -304,6 +319,10 @@ function VCDiff()
     endif
 endfunction
 
-command VCDiff call VCDiff()
+command VCDiff call <SID>VCDiff()
 
 map <leader>d :VCDiff<CR>
+
+" leader shortcut to force a screen redraw, since the video driver
+" on my work machine is horrible
+map <leader>rd :redraw!<CR>
