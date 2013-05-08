@@ -19,6 +19,9 @@ mapping = {
     "files/awesome/themes/": "~/.config/awesome/",
     "files/awesome/revelation/": "~/.config/awesome/",
 
-    # xterm configuration
+    # xterm/urxvt configuration
     "files/Xresources": "~/.Xresources",
+
+    # tmux configuration
+    "files/tmux.conf": "~/.tmux.conf",
 }

@@ -4,6 +4,10 @@ execute pathogen#infect()
 set shell=sh " use a default shell impl, since vim doesn't like fish for some reason
 set nocompatible " turn off silly vi compatibility
 
+set rtp+=~/.local/lib/python2.7/site-packages/powerline/bindings/vim
+
+set noshowmode " with powerline, no need to show the mode
+
 set ai nu sm " standard programming tools: auto-indent, line numbers, show matching braces
 set incsearch hlsearch " better search: incremental as you type, and highlight matches
 set wildmode=list:longest " sane command/file completion: complete longest common string and list all possible matches; why is this not the default?

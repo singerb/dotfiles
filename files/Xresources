@@ -1,5 +1,5 @@
-xterm*faceName: sourcecodepro-10
-xterm*termName: xterm-256color
+!xterm*faceName: sourcecodepro-10
+!xterm*termName: xterm-256color
 
 ! Solarized color scheme for the X Window System
 !
@@ -41,29 +41,36 @@ xterm*termName: xterm-256color
 ! To only apply colors to your terminal, for example, prefix
 ! the color assignment statement with its name. Example:
 !
-! URxvt*background:            S_base03
+! urxvt*background:            S_base03
 
-xterm*background:              S_base03
-xterm*foreground:              S_base0
-xterm*fading:                  40
-xterm*fadeColor:               S_base03
-xterm*cursorColor:             S_base1
-xterm*pointerColorBackground:  S_base01
-xterm*pointerColorForeground:  S_base1
+urxvt*font: xft:Source Code Pro:size=11
+urxvt*italicFont: xft:Source Code Pro:italic:size=11
+urxvt*boldFont: xft:Source Code Pro:bold:size=11
+urxvt*boldItalicFont: xft:Source Code Pro:bold:italic:size=11
 
-xterm*color0:                  S_base02
-xterm*color1:                  S_red
-xterm*color2:                  S_green
-xterm*color3:                  S_yellow
-xterm*color4:                  S_blue
-xterm*color5:                  S_magenta
-xterm*color6:                  S_cyan
-xterm*color7:                  S_base2
-xterm*color9:                  S_orange
-xterm*color8:                  S_base03
-xterm*color10:                 S_base01
-xterm*color11:                 S_base00
-xterm*color12:                 S_base0
-xterm*color13:                 S_violet
-xterm*color14:                 S_base1
-xterm*color15:                 S_base3
+urxvt*scrollBar: False
+
+urxvt*background:              S_base03
+urxvt*foreground:              S_base0
+urxvt*fading:                  40
+urxvt*fadeColor:               S_base03
+urxvt*cursorColor:             S_base1
+urxvt*pointerColorBackground:  S_base01
+urxvt*pointerColorForeground:  S_base1
+
+urxvt*color0:                  S_base02
+urxvt*color1:                  S_red
+urxvt*color2:                  S_green
+urxvt*color3:                  S_yellow
+urxvt*color4:                  S_blue
+urxvt*color5:                  S_magenta
+urxvt*color6:                  S_cyan
+urxvt*color7:                  S_base2
+urxvt*color9:                  S_orange
+urxvt*color8:                  S_base03
+urxvt*color10:                 S_base01
+urxvt*color11:                 S_base00
+urxvt*color12:                 S_base0
+urxvt*color13:                 S_violet
+urxvt*color14:                 S_base1
+urxvt*color15:                 S_base3
