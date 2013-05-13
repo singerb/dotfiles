@@ -24,4 +24,7 @@ mapping = {
 
     # tmux configuration
     "files/tmux.conf": "~/.tmux.conf",
+
+    # powerline customizations
+    "files/powerline": "~/.config/",
 }
