@@ -55,6 +55,9 @@ filetype plugin on
 " word under cursor) available
 runtime ftplugin/man.vim
 
+" get our zsh theme files highlighted nicely
+autocmd BufNewFile,BufRead *.zsh-theme set filetype=zsh
+
 " get our scons files highlighted nicely
 autocmd BufNewFile,BufRead SConstruct,SConscript set filetype=python
 

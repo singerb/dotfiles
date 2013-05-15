@@ -10,6 +10,7 @@ graphlog =
 color = 
 progress = 
 convert = 
+prompt = ~/.hg-prompt/prompt.py
 
 [defaults]
 qnew = -UDe

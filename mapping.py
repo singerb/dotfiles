@@ -8,6 +8,9 @@ mapping = {
     "files/config.fish": "~/.config/fish/",
     "files/fish_prompt.fish": "~/.config/fish/functions/",
 
+    # zshrc config
+    "files/zshrc": "~/.zshrc",
+
     # .vimrc and plugins
     "files/vimrc": "~/.vimrc",
     "files/vim/autoload/": "~/.vim/",
