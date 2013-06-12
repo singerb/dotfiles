@@ -10,7 +10,6 @@ mapping = {
 
     # zshrc config
     "files/zshrc": "~/.zshrc",
-    "files/vortex.zsh-theme": "~/.oh-my-zsh/themes/",
 
     # .vimrc and plugins
     "files/vimrc": "~/.vimrc",
