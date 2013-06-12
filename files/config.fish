@@ -1,4 +1,4 @@
-set -x JAVA_HOME /usr/lib/jvm/java-6-sun
+set -x JAVA_HOME /usr/lib/jvm/java-6-oracle
 set -x P4CONFIG .p4rc
 set -x EDITOR vim
 set -x PATH /usr/local/bin $PATH

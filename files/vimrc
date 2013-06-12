@@ -85,7 +85,9 @@ colorscheme solarized
 let mapleader = ","
 
 " syntastic python options; use flake8 and pylint for MAXIMUM checking
-let g:syntastic_python_checkers=['flake8', 'pylint']
+let g:syntastic_python_checkers = ['flake8', 'pylint']
+let g:syntastic_python_flake8_args = "--max-line-length=300"
+let g:syntastic_python_pylint_args = "--max-line-length=300 -f parseable -r n -i y"
 
 " minibufexpl options: open above
 let g:miniBufExplSplitBelow=0
@@ -308,7 +310,7 @@ command ToggleColorColumn call <SID>ToggleColorColumn()
 map <leader>l :set list! \| ToggleColorColumn<CR>
 
 " leader shortcut for ack
-map <leader>a :Ack!
+map <leader>a :Ack! 
 
 " leader shortcut to show tags
 map <leader>g :TagbarToggle<CR>
