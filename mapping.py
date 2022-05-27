@@ -4,30 +4,22 @@ mapping = {
     "files/hgrc": "~/.hgrc",
     "files/cvsignore": "~/.cvsignore",
 
-    # fish config and prompt
-    "files/config.fish": "~/.config/fish/",
-    "files/fish_prompt.fish": "~/.config/fish/functions/",
-
     # zshrc config
     "files/zshrc": "~/.zshrc",
+    "files/vortex.zsh-theme": "~/.oh-my-zsh-custom/",
+    "files/vortex-powerline.zsh-theme": "~/.oh-my-zsh-custom/",
+    "files/bws-minimal.zsh-theme": "~/.oh-my-zsh-custom/",
 
     # .vimrc and plugins
     "files/vimrc": "~/.vimrc",
     "files/vim/autoload/": "~/.vim/",
     "files/vim/bundle/": "~/.vim/",
-
-    # awesome config, themes, and extensions
-    "files/awesome/rc.lua": "~/.config/awesome/",
-    "files/awesome/eminent.lua": "~/.config/awesome/",
-    "files/awesome/themes/": "~/.config/awesome/",
-    "files/awesome/revelation/": "~/.config/awesome/",
+    "files/vim/personal-snippets/": "~/.vim/",
 
     # xterm/urxvt configuration
     "files/Xresources": "~/.Xresources",
 
     # tmux configuration
     "files/tmux.conf": "~/.tmux.conf",
-
-    # powerline customizations
-    "files/powerline": "~/.config/",
+    "files/tmuxline.conf": "~/.tmuxline.conf",
 }

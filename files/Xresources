@@ -43,10 +43,16 @@
 !
 ! urxvt*background:            S_base03
 
-urxvt*font: xft:Source Code Pro:size=11
-urxvt*italicFont: xft:Source Code Pro:italic:size=11
-urxvt*boldFont: xft:Source Code Pro:bold:size=11
-urxvt*boldItalicFont: xft:Source Code Pro:bold:italic:size=11
+Xft.dpi: 271
+Xft.antialias: true
+Xft.hinting: true
+Xft.rgba: rgb
+Xft.hintstyle: hintfull
+
+urxvt*font: xft:Source Code Pro Medium:pixelsize=11:antialias=true:hinting=true
+urxvt*italicFont: xft:Source Code Pro Medium:italic:pixelsize=11:antialias=true:hinting=true
+urxvt*boldFont: xft:Source Code Pro Medium:bold:pixelsize=11:antialias=true:hinting=true
+urxvt*boldItalicFont: xft:Source Code Pro Medium:bold:italic:pixelsize=11:antialias=true:hinting=true
 
 urxvt*scrollBar: False
 

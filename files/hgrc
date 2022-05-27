@@ -1,15 +1,16 @@
 [ui]
-username = Benedict Singer <bsinger@novodynamics.com>
+username = Benedict Singer <singerb@mac.com>
 editor = vim
 style = compact
 
 [extensions]
 mq =
-children = 
-graphlog = 
-color = 
-progress = 
-convert = 
+children =
+graphlog =
+color =
+pager =
+progress =
+convert =
 prompt = ~/.hg-prompt/prompt.py
 
 [defaults]
@@ -27,3 +28,12 @@ try = push -f ssh://hg.mozilla.org/try
 
 [hooks]
 post-try = hg phase --force --draft "mq()"
+
+[trusted]
+users = nobody, ndi
+
+[color]
+mode = ansi
+
+[pager]
+pager = less -FRX

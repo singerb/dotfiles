@@ -4,3 +4,10 @@
 [core]
 	editor = vim
 	excludesfile = ~/.cvsignore
+	autocrlf = false
+[push]
+	default = simple
+[alias]
+	unstage = reset HEAD
+	pushpr = push -u origin HEAD
+	discard = checkout --

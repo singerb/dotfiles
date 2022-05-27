@@ -1,10 +1,13 @@
 " start things off with pathogen, before we turn on filetype
 execute pathogen#infect()
 
+" needed in VS Code/hyper due to xterm.js color rendering
+let g:solarized_termcolors=256
+
 set shell=sh " use a default shell impl, since vim doesn't like fish for some reason
 set nocompatible " turn off silly vi compatibility
 
-set rtp+=~/.local/lib/python2.7/site-packages/powerline/bindings/vim
+" set rtp+=/usr/local/lib/python2.7/site-packages/powerline/bindings/vim
 
 set noshowmode " with powerline, no need to show the mode
 
@@ -23,7 +26,7 @@ set splitbelow splitright " splits go below and right by default
 " remove the toolbar,menubar,scrollbars from the gui version
 " set a nice font for the GUI; terminal vim uses the terminal font, obviously
 set guioptions-=T
-set guioptions-=m
+" set guioptions-=m
 set guioptions-=r
 set guioptions-=R
 set guioptions-=l
@@ -35,12 +38,13 @@ set encoding=utf-8 " so our list chars can be nice
 set fo=croql " text wrapping: auto wrap comments, auto insert comment leaders; TODO add a for markdown files for nice paragraph wrapping
 set wrap " soft wrap text
 set listchars=tab:▸-,trail:-,eol:¬ " show tabs, trailing spaces, and ends of lines; there's a leader shortcut later to toggle list mode since it can be distracting
-set textwidth=80
+set textwidth=120
 " same shortcut to toggle list mode toggles the column,
 " since it's also distracting
 " set colorcolumn="+1"
 
 set scrolloff=5 " always keep 5 lines of context when scrolling the cursor
+set lazyredraw " scrolling with lots of error markers can be slow; this speeds it up
 
 set hidden " keep changed buffers as hidden ones
 set cursorline " highlight the cursor line
@@ -56,13 +60,18 @@ filetype plugin on
 runtime ftplugin/man.vim
 
 " get our zsh theme files highlighted nicely
-autocmd BufNewFile,BufRead *.zsh-theme set filetype=zsh
+autocmd BufNewFile,BufRead *.zsh-theme setlocal filetype=zsh
 
 " get our scons files highlighted nicely
-autocmd BufNewFile,BufRead SConstruct,SConscript set filetype=python
+autocmd BufNewFile,BufRead SConstruct,SConscript setlocal filetype=python
 
 " make requires tabs, not spaces, so force our nice tab expansion off although they'll still display as 4 spaces
 autocmd FileType make setlocal noexpandtab
+
+" PHP and JS for WordPress uses tabs not spaces
+" Vim's PHP comment settings are also messed up
+autocmd FileType php,javascript,css setlocal noexpandtab sw=4 sts=0 ts=4
+autocmd FileType php setlocal comments+=sb:/*,mb:*,ex:*/,b://
 
 " smart indenting generally gets things right, but I find it annoying in python files due to the comment behavior
 autocmd! FileType python setlocal nosmartindent
@@ -72,59 +81,101 @@ autocmd BufRead,BufNewFile *.vm setfiletype velocity
 
 " set up comment strings
 autocmd FileType python,sh,make setlocal commentstring=#\ %s
-autocmd FileType c,cpp setlocal commentstring=//\ %s
+autocmd FileType c,cpp,php setlocal commentstring=//\ %s
 
-" sadly, mozilla and my workplace use 2 spaces for C/C++, so override for that
-autocmd BufRead,BufNewFile *.c,*.h,*.cpp,*.hpp,*.cxx set sw=2 sts=2
+" sadly, mozilla and my workplace use 2 spaces for C/C++/C#/Java, so override for that
+autocmd BufRead,BufNewFile *.c,*.h,*.cpp,*.hpp,*.cxx,*.cs,*.java setlocal sw=2 sts=2
 
 " nice colorscheme
 set background=dark
 colorscheme solarized
 
+" airline config
+" branch extension is super slow, disable it
+let g:airline_powerline_fonts=1
+let g:airline#extensions#branch#enabled = 0
+let g:airline#extensions#tmuxline#enabled = 0
+let g:tmuxline_preset = 'full'
+let g:tmuxline_theme = {
+    \   'a'    : [ 15, 4 ],
+    \   'b'    : [ 15, 12 ],
+    \   'c'    : [ 14, 10 ],
+    \   'x'    : [ 14, 10 ],
+    \   'y'    : [ 15, 12 ],
+    \   'z'    : [ 15, 4 ],
+    \   'win'  : [ 14, 10 ],
+    \   'cwin' : [ 15, 9, 'bold' ],
+    \   'bg'   : [ 15, 0 ],
+    \ }
+
 " sane leader key for our commands and plugins
 let mapleader = ","
 
-" syntastic python options; use flake8 and pylint for MAXIMUM checking
+" syntastic python options; use flake8 and pylint for MAXIMUM checking; default to passive
+" Scons files are horrible with syntastic, and it slows down editing; so only check files that I want
+" there are leader mappings to run a check, and to clear signs
+" no way that I know of to clear syntax highlighting, so it's off
+let g:syntastic_mode_map = { 'mode': 'passive',
+                           \ 'active_filetypes': ['php'],
+                           \ 'passive_filetypes': [] }
+let g:syntastic_php_checkers = ['php']
 let g:syntastic_python_checkers = ['flake8', 'pylint']
-let g:syntastic_python_flake8_args = "--max-line-length=300"
-let g:syntastic_python_pylint_args = "--max-line-length=300 -f parseable -r n -i y"
+let g:syntastic_python_flake8_args = "--max-line-length=120"
+let g:syntastic_python_pylint_args = "--max-line-length=120 -f parseable -r n -i y"
+let g:syntastic_enable_highlighting = 0
 
 " minibufexpl options: open above
 let g:miniBufExplSplitBelow=0
 
 " command-t options: reverse the results so the best match is always right
-" above the prompt
+" above the prompt, search more files
 let g:CommandTMatchWindowReverse = 1
+let g:CommandTMaxFiles = 50000
+let g:CommandTFileScanner = 'find'
+
+" ctrl-p options, similar
+" TODO if it seems slow, use VCS file listing commands
+let g:ctrlp_max_files = 50000
+let g:ctrlp_extensions = ['mixed']
 
 " tagbar setup: auto close, auto focus, sort by position
 let g:tagbar_autoclose = 1
 let g:tagbar_autofocus = 1
 let g:tagbar_sort = 0
 
-" taglist setup: don't auto open, open on the right, use ctags, sort by order in the file
-" replaced by tagbar; TODO remove from vim/dotfiles repo
-"let g:Tlist_Auto_Open = 0
-"let g:Tlist_Use_Right_Window=1
-"let g:Tlist_Use_Right_Window=1
-"let g:TagList_title = "[Taglist]"
-"let g:Tlist_Ctags_Cmd = "ctags"
-"let g:Tlist_Sort_Type = "order"
-
-" eclim settings
-let g:EclimProjectTreeAutoOpen = 1
-let g:EclimProjectTreeExpandPathOnOpen = 1
-let g:EclimProjectTreeSharedInstance = 1
-let g:SuperTabDefaultCompletionType = "<c-x><c-u>"
-let g:VerticalToolWindowSide = 'right'
-let g:EclimValidateSortResults = 'severity'
-let g:EclimProjectTreeActions = [
-    \ {'pattern': '.*', 'name': 'Tab', 'action': 'tabnew'},
-    \ {'pattern': '.*', 'name': 'VSplit', 'action': 'vsplit'},
-    \ {'pattern': '.*', 'name': 'Split', 'action': 'split'},
-    \ {'pattern': '.*', 'name': 'Edit', 'action': 'edit'},
-  \ ]
+" eclim settings; for now, just a simple setting to make completion work with YCM
+" will add back more settings later if needed; might add mappings for search etc if I do a lot of Java
+let g:EclimCompletionMethod = 'omnifunc'
+" let g:EclimProjectTreeAutoOpen = 1
+" let g:EclimProjectTreeExpandPathOnOpen = 1
+" let g:EclimProjectTreeSharedInstance = 1
+" let g:SuperTabDefaultCompletionType = "<c-x><c-u>"
+" let g:VerticalToolWindowSide = 'right'
+" let g:EclimValidateSortResults = 'severity'
+" let g:EclimProjectTreeActions = [
+"     \ {'pattern': '.*', 'name': 'Tab', 'action': 'tabnew'},
+"     \ {'pattern': '.*', 'name': 'VSplit', 'action': 'vsplit'},
+"     \ {'pattern': '.*', 'name': 'Split', 'action': 'split'},
+"     \ {'pattern': '.*', 'name': 'Edit', 'action': 'edit'},
+"   \ ]
 let g:EclimJavaSearchSingleResult = 'edit'
-let g:EclimJavaHierarchyDefaultAction = 'edit'
+let g:EclimPhpSearchSingleResult = 'edit'
+" let g:EclimJavaHierarchyDefaultAction = 'edit'
+
+" UltiSnips settings - don't conflict with YCM, keep snippets in my personal directory
+" trigger expansion with Ctrl-e, others aren't used, but can't be empty or it complains
+let g:UltiSnipsExpandTrigger="<C-e>"
+let g:UltiSnipsListSnippets="<C-S><C-L>"
+let g:UltiSnipsJumpForwardTrigger="<C-S><C-S>"
+let g:UltiSnipsJumpBackwardTrigger="<C-S><C-s>"
+let g:UltiSnipsSnippetDirectories=["UltiSnips", "personal-snippets"]
+
+" YCM settings - no annoying extra_conf prompt, use lang identifiers
+let g:ycm_seed_identifiers_with_syntax = 1
+let g:ycm_confirm_extra_conf = 0
+
+" use ag instead of ack for ack.vim (faster); TODO will need to be changed for Windows
+let g:ackprg = 'ag --nogroup --nocolor --column'
 
 " old pre-eclim Java settings
 "autocmd BufRead,BufNewFile *.java set path+=$PROJECT_HOME/devel/src/share/**
@@ -143,15 +194,6 @@ let g:EclimJavaHierarchyDefaultAction = 'edit'
 " still useful Java settings to run ant from :make
 autocmd BufRead,BufNewFile *.java set makeprg=ant\ -find\ build.xml
 autocmd BufRead,BufNewFile *.java set efm=%A\ %#[javac]\ %f:%l:\ %m,%-Z\ %#[javac]\ %p^,%-C%.%#
-
-" abbreviations for Java logging
-ab logi LogFactory.getLog(getClass()).info(
-ab logd LogFactory.getLog(getClass()).debug(
-ab loge LogFactory.getLog(getClass()).error(
-ab logw LogFactory.getLog(getClass()).warn(
-"ab logp import org.apache.commons.logging.LogFactory;
-ab sop System.out.println(
-ab sep System.err.println(
 
 function MakeFQClassName(name)
     let fname = ""
@@ -309,14 +351,28 @@ command ToggleColorColumn call <SID>ToggleColorColumn()
 
 map <leader>l :set list! \| ToggleColorColumn<CR>
 
-" leader shortcut for ack
+" leader shortcut for ack and ack word under cursor
 map <leader>a :Ack! 
+map <leader>aw :Ack! <C-R><C-W><CR>
+
+" leader shortcut for command-T buffer - not sure why plugin doesn't get this automatically
+map <leader>t :CtrlPMixed<CR>
+" map <leader>r :CtrlPBuffer<CR>
+" map <leader>t :CommandTBuffer<CR>
+" map <leader>r :CommandTBuffer<CR>
 
 " leader shortcut to show tags
 map <leader>g :TagbarToggle<CR>
 
 " leader shortcut to show the undo tree
 map <leader>u :GundoToggle<CR>
+
+" leader shortcut to do java nav
+map <leader>ji :JavaImport<CR>
+map <leader>js :JavaSearchContext<CR>
+
+" leader shortcut for PHP searching
+map <leader>ps :PhpSearchContext<CR>
 
 " leader shortcut to run either hg or git diff via lawrencium or fugitive, if
 " available
@@ -331,6 +387,17 @@ endfunction
 command VCDiff call <SID>VCDiff()
 
 map <leader>d :VCDiff<CR>
+
+" leader shortcut run a syntastic check, and clear the signs
+function s:ClearSigns()
+    let nr = bufnr('%')
+    execute("sign unplace * buffer=" . nr)
+endfunction
+
+command ClearSigns call <SID>ClearSigns()
+
+map <leader>sc :SyntasticCheck<CR>
+map <leader>sd :ClearSigns<CR>
 
 " leader shortcut to force a screen redraw, since the video driver
 " on my work machine is horrible
