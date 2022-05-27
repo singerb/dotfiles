@@ -19,6 +19,8 @@ ZSH_THEME="bws-minimal"
 # Example aliases
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
+alias glog="git log --all --graph --decorate"
+alias gst="git status"
 
 # Set to this to use case-sensitive completion
 # CASE_SENSITIVE="true"
@@ -54,10 +56,35 @@ MODE_INDICATOR=" C"
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # maybe vi-mode?
-plugins=(themes vi-mode zsh-syntax-highlighting history-substring-search)
+plugins=(zsh-nvm themes vi-mode history-substring-search)
 
 source $ZSH/oh-my-zsh.sh
 
 # Customize to your needs...
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
+# export NVM_DIR="$HOME/.nvm"
+# [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
+
+#export WPCOM_LOCAL="/mnt/c/Users/Benedict Singer/Documents/WordPress/wpcom/wpcom/public_html/"
+#export MC_LOCAL="/mnt/c/Users/Benedict Singer/Documents/WordPress/wpcom/missioncontrol/public_html/"
+export WPCOM_LOCAL="/home/singerb/wpcom/wpcom/public_html/"
+export MC_LOCAL="/home/singerb/wpcom/missioncontrol/public_html/"
+
+function rsynccmd () {
+    rsync -az --delete --delete-after --info=progress2 --exclude 'bin/wp-cli/ci' --exclude '.svn' --exclude '.git' --exclude '.settings' --exclude 'wp-content/themes' $1 $2
+}
+
+function wppull () {
+    rsynccmd wpcom:/home/wpcom/public_html/ $WPCOM_LOCAL
+}
+
+function wppush () {
+    rsynccmd $WPCOM_LOCAL wpcom:/home/wpcom/public_html/
+}
+
+function mcpull () {
+    rsynccmd wpcom:/home/missioncontrol/public_html/ $MC_LOCAL
+}
+
+function mcpush () {
+    rsynccmd $MC_LOCAL wpcom:/home/missioncontrol/public_html/
+}
