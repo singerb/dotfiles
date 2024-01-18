@@ -1,6 +1,7 @@
 [user]
 	name = Benedict Singer
 	email = singerb@mac.com
+	signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOiZW3/LIxvrz/sk5Jk1pJGasXK9d9OlKr6c9uLAQ8ld
 [core]
 	editor = vim
 	excludesfile = ~/.cvsignore
@@ -11,3 +12,11 @@
 	unstage = reset HEAD
 	pushpr = push -u origin HEAD
 	discard = checkout --
+[pull]
+	rebase = false
+[gpg]
+	format = ssh
+[gpg "ssh"]
+	program = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"
+[commit]
+	gpgsign = true
