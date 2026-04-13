@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import os
 import logging
@@ -45,7 +45,7 @@ class Updater(object):
 
     def run(self):
         # our config is a simple key value mapping
-        for src, dest in self.config.iteritems():
+        for src, dest in self.config.items():
             logging.info("Processing record '%s' -> '%s'", src, dest)
 
             # figure out where this file is coming from

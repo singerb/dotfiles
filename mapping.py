@@ -16,6 +16,9 @@ mapping = {
     "files/vim/bundle/": "~/.vim/",
     "files/vim/personal-snippets/": "~/.vim/",
 
+    # nvim
+    "files/nvim/": "~/.config/",
+
     # xterm/urxvt configuration
     "files/Xresources": "~/.Xresources",
 

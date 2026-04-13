@@ -14,7 +14,7 @@ VIRTUAL_ENV_DISABLE_PROMPT=1
 # Look in ~/.oh-my-zsh/themes/
 # Optionally, if you set this to "random", it'll load a random theme each
 # time that oh-my-zsh is loaded.
-ZSH_THEME="bws-minimal"
+ZSH_THEME="sunaku"
 
 # Example aliases
 # alias zshconfig="mate ~/.zshrc"
@@ -88,3 +88,5 @@ function mcpull () {
 function mcpush () {
     rsynccmd $MC_LOCAL wpcom:/home/missioncontrol/public_html/
 }
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
